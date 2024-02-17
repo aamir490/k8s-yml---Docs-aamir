@@ -1,0 +1,138 @@
+#############################################################
+ # ---------   ***  DEVOPS  **** TG - LEC-48  ---------
+#############################################################
+
+#  vi pod1.yml   ( basic.yml    for creating manifest,,create pod,,name of pod )
+--- 
+kind: Pod                              
+apiVersion: v1                     
+metadata:                           
+  name: testpod                  
+spec:                                    
+  containers:                      
+    - name: c00                     
+      image: ubuntu              
+      command: ["/bin/bash", "-c", "while true; do echo Hello-AAMIR; sleep 5 ; done"]
+  restartPolicy: Never         # Defaults to Always
+...
+
+# ---------- $$$$$$$$$$ gaurav script  for  port expose
+---
+kind: Pod
+apiVersion: v1
+metadata:
+   name: thirrd
+   labels:
+      podname: secondpodlbl
+spec:
+  containers:
+    - name: secondpod
+      image: coolgourav147/nginx-custom  # --- gaurav image
+...
+
+## note :: port expose run cmnd
+  #---->$  kubectl expose pod thirrd --port=8000 --target-port=80 --name my-first-service
+ 
+
+# ---------- $$$$$$$$$$ env , label , namespace , $$$$$
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: testpod
+  namespace: testns #--- we creat namespace 
+  labels:
+    apps: new-app
+spec:
+  containers:
+    - name: c1
+      image: nginx
+      env:
+        - name: myname
+          value: aammiirr
+...          
+
+  ##  for going inside container &  check type   'env' #  kubectl exec testpod12 -it -c c1 -- /bin/bash
+                                                       #  kubectl exec testpod12 -c c1 env
+
+
+# ***********************   vi pod2.yml  -  Annotations  - ********************************
+---
+kind: Pod                              
+apiVersion: v1                     
+metadata:                           
+  name: testpod
+  annotations: 
+     description : our-first-pod   # --- annotate        
+spec:                                    
+  containers:                      
+    - name: c00                     
+      image: ubuntu              
+      command: ["/bin/bash", "-c", "while true; do echo Hello-AAMIR; sleep 5 ; done"]
+  restartPolicy: Never         # Defaults to Always
+...  
+
+
+
+# **************    vi pod3.yml  -  MULTI CONTAINER POD ENVIRONMENT  -  ********************** 
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: testpod3
+spec:
+  containers:
+    - name: c00    # --- container-1
+      image: ubuntu
+      command: ["/bin/bash", "-c", "while true; do echo Hello-AAMIR; sleep 5 ; done"]
+    - name: c01    # --- container-2
+      image: ubuntu
+      command: ["/bin/bash", "-c", "while true; do echo Hello-AAMIR; sleep 5 ; done"]
+    - name: c03    # --- container-3
+      image: ubuntu
+      command: ["/bin/bash", "-c", "while true; do echo Hello-AAMIR; sleep 5 ; done"]
+...      
+
+
+
+# ---------- $$$$$$$$$$  multi container
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: multicontainer
+  labels:
+    type1: www
+spec:
+  containers:
+    - name: c1
+      image: coolgourav147/nginx-custom  # ---- gaurav image
+      env:
+        - name: myname
+          value: aammiirr
+      args: ["sleep","3600"]
+    - name: c2
+      image: coolgourav147/nginx-custom  # ---- gaurav image
+...      
+
+
+##  for going inside container $ check type 'env'  #  kubectl exec multicontainer -it -c c1 -- /bin/bash
+                                                   #  kubectl exec testpod12 -c c1 env
+
+                                                   
+# *****************   vi pode4.yml   - POD ENVIRONMENT VARIABLES  -   ********************************
+
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: environments
+spec:
+  containers:
+    - name: c00
+      image: ubuntu
+      command: ["/bin/bash", "-c", "while true; do echo Hello-AAMIR; sleep 5 ; done"]
+      env:                        # List of environment variables to be used inside the pod
+      - name: MYNAME
+        value: aammiirr
+...        

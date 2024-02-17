@@ -1,0 +1,137 @@
+
+################################################################################
+#                                   <-- H E L M -->
+################################################################################
+'''
+## INSTALL HELM :- - - - -
+$ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+$ ls    -----> get_helm.sh
+$ chmod 700 get_helm.sh
+$ sh get_helm.sh
+$ helm version
+$ helm
+$ helm ls
+$ helm ls -A
+$ $ helm ls -n kube-system
+$ helm repo ls
+
+
+## Kubernetes Metrics Server :---
+https://artifacthub.io/packages/helm/metrics-server/metrics-server
+
+$ helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+
+$ helm repo ls
+      NAME            URL
+      metrics-server  https://kubernetes-sigs.github.io/metrics-server/
+
+$ helm search repo metrics-server
+      NAME                            CHART VERSION   APP VERSION     DESCRIPTION             
+      metrics-server/metrics-server   3.10.0          0.6.3           Metrics Server is a scalable, efficient source ...
+
+$ (syntax)  # helm intall  <Release Name/App Name>  <Repo Name/Chart Name> -n  
+$ helm install metricserver metrics-server/metrics-server -n kube-system
+                       OORR
+$ helm upgrade --install metricserver metrics-server/metrics-server -n kube-system 
+$ helm upgrade --install metricserver metrics-server/metrics-server -n kube-system --set replicas=2
+ 
+$ helm ls -n kube-system
+$ kubectl get all -n kube-system
+$ kubectl get serviceaccount -n kube-system
+$ kubectl get serviceaccount -n kube-system | grep -i "metricserver-metrics-server" 
+$ kubectl get clusterrole -n kube-system | grep -i "metric*"
+
+$ kubectl top nodes
+     NAME                                          CPU(cores)   CPU%   MEMORY(bytes)   MEMORY                       %
+     ip-192-168-52-2.ap-south-1.compute.internal   28m          2%     498Mi           33%  
+
+$ kubectl top pods -A
+    NAMESPACE     NAME                                           CPU(cores)   MEMORY(bytes)
+    kube-system   metricserver-metrics-server-5fff69c77f-h687t   5m           14Mi
+
+$ helm upgrade --install metricserver metrics-server/metrics-server -n kube-system --set replicas=2
+    NAME:   
+    LAST DEPLOYED: Wed May 24 07:48:42 2023
+    NAMESPACE: kube-system
+    STATUS: deployed
+    REVISION: 2
+
+$ kubectl get all -n kube-system
+    pod/metricserver-metrics-server-5fff69c77f-h687t   1/1     Running   0          25m
+    pod/metricserver-metrics-server-5fff69c77f-kqk6z   0/1     Running   0          17s
+
+
+$ helm ls -n kube-system
+    NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                  APP VERSION
+    metricserver    kube-system     2               2023-05-24 07:48:42.981716241 +0000 UTC deployed        metrics-server-3.10.0  0.6.3
+
+$ kubectl get all -n kube-system
+
+$ helm rollback metricserver -n kube-system
+    Rollback was a success! Happy Helming!
+
+$ kubectl get all -n kube-system
+    pod/metricserver-metrics-server-5fff69c77f-h687t   1/1     Running   0          27m
+
+$ helm uninstall metricserver -n kube-system               
+     release "metricserver" uninstalled
+
+$ kubectl get all -n kube-system
+
+
+
+## #########3
+
+[ec2-user@ ~]$ mkdir maven
+[ec2-user@  ~]$ cd maven
+[ec2-user@ maven]$ git clone https://github.com/MithunTechnologiesDevOps/maven-web-application.git
+[ec2-user@ maven]$ sudo yum install tree -y
+[ec2-user@ maven]$ tree mavenchart/   
+
+ mavenchart/
+├── charts
+├── Chart.yaml
+├── templates
+│   ├── deployment.yaml
+│   ├── _helpers.tpl
+│   ├── hpa.yaml
+│   ├── ingress.yaml
+│   ├── NOTES.txt
+│   ├── serviceaccount.yaml
+│   ├── service.yaml
+│   └── tests
+│       └── test-connection.yaml
+└── values.yaml
+3 directories, 10 files
+
+[ec2-user@ maven]$ tree mavenchart/templates/
+
+ mavenchart/templates/
+├── deployment.yaml
+├── _helpers.tpl
+├── hpa.yaml
+├── ingress.yaml
+├── NOTES.txt
+├── serviceaccount.yaml
+├── service.yaml
+└── tests
+    └── test-connection.yaml
+1 directory, 8 files
+ 
+[ec2-user@ maven]$ cat mavenchart/templates/deployment.yaml
+
+[ec2-user@ maven]$ cat mavenchart/values.yaml
+
+[ec2-user@ maven]$ cat mavenchart/Chart.yaml
+
+[ec2-user@ maven]$ helm install mavenwebapp  mavenchart/ --dry-run
+
+[ec2-user@ maven]$ vi  mavenchart/values.yaml
+
+[ec2-user@ maven]$ vi mavenchart/templates/deployment.yaml
+
+[ec2-user@ maven]$ helm install mavenwebapp  mavenchart/ --dry-run
+
+
+
+'''

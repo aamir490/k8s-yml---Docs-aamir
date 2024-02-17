@@ -1,0 +1,202 @@
+Agenda :- Kubernets setup using 'kubeadm' in AWS Ec2 Ubuntu Server [ 20.02]
+======
+
+
+
+##############################################################################
+
+   1 - Manager [ Control Plane ]   ==  ( 4 GB , 2 Core ) ....   T2.Medium
+
+   2 - Workers [  Worker Node  ]   ==  ( 1 GB , 1 Core ) ....   T2.Micro
+
+##############################################################################
+
+
+NOTE ----->>  First, login as  ‘root’  user because the following set of commands need to be executed with ‘sudo’ permissions.
+
+
+...........................................                                       ...........................................  
+++++++++++++++++++++++++++++++++++++++++++++ COMMON FOR BOTH ' MASTER & WORKERS ' ++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+# 0) RENAMING SERVERS    "MASTER" "Node-1" "Node-2"
+
+    $ sudo hostnamectl set-hostname MASTER
+
+    $ sudo hostnamectl set-hostname Node-1
+
+    $ sudo hostnamectl set-hostname Node-2
+
+
+
+
+# 1) SWITCH TO 'ROOT' USER:
+
+    $ sudo su -
+
+
+
+# 2) TURN OF SWAP SPACE:
+
+    $ swapoff -a                
+    $ sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+ 
+    NOTE :- (if u want ke k8 work properly, turnoff swap memory ,jab RAM full hojati he tab wo kuch chiz ko swap memory me bhej deti he , disk me)
+
+
+
+# 3) INSTALL REQUIRED PACKAGES & CONFIGURED & RUN THESE COMMANDS:
+
+    $ apt-get update -y
+    $ apt-get install -y apt-transport-https 
+ 
+    # (req to install other s/w)
+    $ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+
+
+    # (package manager key add krre hain)
+    # (ye 3 line se : adding repository info to source file / ek sath chalana he teeno ko)
+
+cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+
+    # ( after pasting these 3 lines, check entry added or not )  
+    $ cat /etc/apt/sources.list.d/kubernetes.list
+
+
+    $ apt-get update -y
+
+   # (Install kubeadm, Kubelet And Kubectl  And containerD )
+   # ( <containerd>: container run time ,   <kubelet>: agent , <kubeadm>: innitialize master, join worker to master , help us to create & configure cluster, )
+
+   # ( For MASTER )
+   $ apt-get install -y kubelet kubeadm kubectl kubernetes-cni containerd
+  
+   # ( For Both WORKERS )
+   $ apt-get install -y kubelet kubeadm kubernetes-cni containerd
+
+   # ( check kubeadm versions )
+   $ kubeadm version
+   
+   # ( apt-mark hold , will prevent the package from being automatically upgarded or removed ) = ( auto upgrade nhi hoga isse)
+   $ apt-mark hold kubelet kubeadm kubectl containerd
+
+ 
+
+
+# 4) CONFIGURE CONTAINERD , LOAD THE NECESSARY MODULES FOR CONTAINERD:
+
+cat <<EOF |sudo tee /etc/modules-load.d/continerd.conf
+overlay
+br_netfilter
+EOF
+
+   # (after pasting above comnad, check  entry added or not )
+   $ cat /etc/modules-load.d/continerd.conf
+
+   $ modprobe overlay
+   $ modprobe br_netfilter
+
+
+
+
+# 5) ( load / enable kernal feature for containerd):
+
+cat << EOF |sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
+net.bridge.bridge-nf-call-iptables = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward = 1
+EOF
+
+  $ sysctl --system
+  # (kuch waarning aygi, ignore maaaro)
+
+
+
+
+# 6) CONFIGURE cONTAINERD: (configuring containerd as default run time)
+
+  $ mkdir -p /etc/containerd
+  $ containerd config default|sudo tee /etc/containerd/config.toml 
+  $ systemctl restart containerd
+
+
+
+
+ 
+# 7) Enable and start kubelet service: (if ''systemctl status kubelet'' ( koi dikkat nhi if not ok))
+
+   $ systemctl daemon-reload  
+   $ systemctl start kubelet
+   $ systemctl status kubelet
+   $ systemctl enable kubelet.service
+
+
+...........................................                                                     ...........................................  
+++++++++++++++++++++++++++++++++++++++++++++ COMMON FOR BOTH ' MASTER & WORKERS    "" END ""  ' ++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+
+
+
+
+............................................                          ............................................  
+++++++++++++++++++++++++++++++++++++++++++++ FOR only ' MASTER Node ' ++++++++++++++++++++++++++++++++++++++++++++
+
+NOTE --->  Steps Only For Kubernetes Master Node. 
+
+
+
+# 1)  Switch to the root user:
+
+    $ sudo su -
+
+
+
+# 2)  Initialize Kubernates master by executing below commond.
+
+    $ kubeadm init 
+
+
+# 3) exit root user & exeucte as normal user
+
+    $ exit
+
+    # (After exit to root user ,chcek   kubectl  version < connection refused > )
+    $  kubectl version --short
+
+
+
+   # ubuntu@MASTER:~$ (as simple user ye cmd run kro)
+   $ mkdir -p $HOME/.kube
+   $ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+   $ sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+
+
+then:
+
+ $ kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+
+ $ kubectl get pods -A
+
+
+
+
+
+if you want to create token again:
+
+ $ kubeadm token create --print-join-command
+
+ $ kubectl get nodes
+
+
+
+
+
+
+

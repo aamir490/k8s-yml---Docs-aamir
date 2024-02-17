@@ -1,0 +1,125 @@
+############################################################################
+ # -------- $$$$$$$     FOR CREATE SERVICE  ----------------------
+############################################################################
+
+#  vi service.yml
+---
+kind: Service    #---------- Defines to create Service type Object
+apiVersion: v1
+metadata:
+  name: demoservice
+  # namespace: testns # -- if your namespace already exsist  & uwant to create pod in ''testn''
+spec:
+  ports:
+    - port: 80       #---------- Containers port exposed
+      targetPort: 80 #-------------------- Pods port
+  selector:
+    name: deployment #------------ Apply this service to any pods which has the specific label
+  type: ClusterIP    #----------- Specifies the service type i.e ClusterIP or NodePort
+...         
+
+# -------$$$$$ gaurav  ' Service '    now ab selector into othrt yml file
+
+---
+kind: Service                             # Defines to create Service type Object
+apiVersion: v1
+metadata:
+  name: myservice
+  labels:
+    servicelab: labelname
+spec:
+  type: NodePort             # ----------svc type NodePort
+  ports:
+    - nodePort: 32000             # yaha  jo  bhi request ayegi
+      port: 9000                  # yaha ayegi
+      targetPort: 80              # 9000 issko yaha bhej defa
+  selector:
+    name: deployment                    # Apply this service to any pods which has the specific label
+                        
+...    
+
+
+
+# ***********  | vi deployhttpd.yml <----|(%%%%%%%%%%%)  NODEPORT |   vi svc.yml  |    ***************************
+---
+kind: Service    # Defines to create Service type Object
+apiVersion: v1
+metadata:
+  name: demoservice
+spec:
+  ports:
+    - port: 80        # Containers port exposed
+      targetPort: 80     # Pods port
+  selector:
+    name: deployment    # Apply this service to any pods which has the specific label
+  type: NodePort        # Specifies the service type i.e ClusterIP or NodePort
+...  
+
+
+
+
+
+# --------------------------------------------------------------------------------=
+#  vi myservive.yml 
+---
+kind: Pod                              
+apiVersion: v1                     
+metadata:                           
+  name: testpod 
+  labels:          # ----- label of pods
+     apps: my-app
+  namespace: testns   # -- if your namespace already exsist  & uwant to create pod in ''testn''               
+spec:                                    
+  containers:                      
+    - name: c1                    
+      image: ubuntu              
+      ports:
+        - containerPort: 8080
+...
+
+---
+kind: Service    #------ Defines to create Service type Object
+apiVersion: v1
+metadata:
+  name: demoservice  # ----- service name
+  namespace: testns # -- if your namespace already exsist  & uwant to create pod in ''testn''
+spec:
+  type: ClusterIP    #--- Specifies the service type i.e ClusterIP or NodePort
+  selector:
+    apps: my-app #---- Apply this service to any pods which has the specific label
+  ports:
+    - port: 80        # Containers port exposed
+      targetPort: 8080     # Pods port   
+...
+# --------------------------------------------------------------------------------=
+
+#  vi myservive.yml 
+#  kubectl apply -f myservive.yml
+#  kubectl get all -n testns   # --- ( showing pod name , showing service name IP , service type)
+#  kubectl get svc             # ---      NAME           TYPE        CLUTR-IP       EXTRNL-IP     PORT
+#                                      demoservice     ClusterIP   10.110.179.182    <none>     80:32282/TCP                                                        
+#  kubectl describe svc demoservice -n testns    # --- ( full details of service)              
+
+
+# $$$$$$$$$$$$$$ gaurav  ' Service '    now ab selector into othrt yml file
+
+---
+kind: Service                             # Defines to create Service type Object
+apiVersion: v1
+metadata:
+  name: myservice
+  labels:
+    servicelab: labelname
+spec:
+  type: NodePort                            # svc type NodePort
+  ports:
+    - nodePort: 32000             # yaha  jo  bhi request ayegi
+      port: 9000                  # yaha ayegi
+      targetPort: 80              # 9000 issko yaha bhej defa
+  selector:
+    name: deployment                    # Apply this service to any pods which has the specific label
+    type: app                      # Specifies the service type i.e ClusterIP or NodePort
+...    
+
+
+

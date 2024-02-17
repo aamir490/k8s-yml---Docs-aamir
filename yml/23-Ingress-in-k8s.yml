@@ -1,0 +1,172 @@
+'''
+What is Ingress? 
+    Ingress exposes HTTP and HTTPS routes from outside the cluster to services within the cluster.
+      Traffic routing is controlled by rules defined on the Ingress resource.
+
+    The Ingress is a Kubernetes resource that lets you configure an HTTP load balancer for applications running on Kubernetes, 
+      represented by one or more Services. Such LB is necessary to deliver those applications to clients outside of the Kubernetes cluster.
+
+    In Kubernetes, an Ingress is an object that allows access to your Kubernetes services from outside the Kubernetes cluster.
+      You configure access by creating a collection of rules that define which inbound connections reach which services.
+
+    Ingress is the most useful if you want to expose multiple services under the same IP address, 
+      and these services all use the same L7 protocol (typically HTTP). You only pay for one load balancer.
+
+    Ingress is actually NOT a type of service. 
+      Instead, it sits in front of multiple services &s act as a “smart router” or entrypoint into your cluster.  
+    You can do a lot of different things with an Ingress, and there are many types of Ingress controllers that have different capabilities.  
+
+
+
+## Prerequisites Of Ingress:-
+
+     You must have an Ingress controller to satisfy an Ingress. Only creating an Ingress resource has no effect.
+
+     You may need to deploy an Ingress controller such as ingress-nginx. You can choose from a number of Ingress controllers.
+
+
+What is Ingress Controllers ?
+    Ingress Controllers is typically a proxy service deployed in the cluster.It is nothing but a k8s Deployment  exposed to a service.
+
+    An Ingress controller is a specialized LB for k8s (and other containerized) environments. 
+      An Ingress controller abstracts away the complexity of k8s application traffic routing & provides a bridge between k8s services 
+        and external ones.
+
+    In order for the Ingress resource to work, the cluster must have an ingress controller running.  
+
+    " ingress-nginx " is an Ingress controller for Kubernetes using NGINX as a reverse proxy and load balancer.
+
+
+The Ingress resource supports the following features:-------
+
+Content-based routing:
+
+a - Host-based routing :--
+
+   For eg:- routing requests with the host header foo.example.com to one group of services and the host header bar.example.com to another group.
+
+b - Path-based routing :--
+   For eg:- routing requests with the URI that starts with /serviceA to service A and requests with the URI that starts with /serviceB to service B
+
+
+
+    ##--> For Installing
+      "  https://github.com/orgs/MithunTechnologiesDevOps/repositories  "
+
+                         OR 
+      " https://github.com/MithunTechnologiesDevOps/kubernetes-ingress  "
+'''   
+
+
+
+######Ingress Resource: 
+## Host BASESD ROUTING: 
+# REFERENCE ONLY :- 
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: <name>
+  namespace: <namespace>
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: <domainName>
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/<Path>"
+        backend:
+          service:
+            name: <serviceName>
+            port:
+              number: <servicePort>
+...            
+
+
+#----------------------------------------------------------------------------------------------------
+
+--- # Mithun Deployment :
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: javawebapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: javawebapp # --- SAME
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 60
+  template:
+    metadata:
+      name: javawebapp
+      labels:
+        app: javawebapp # --- SAME
+    spec:
+      containers:
+      - name: javawebapp
+        image: dockerhandson/java-web-app:3
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 1
+            memory: 2Gi
+        livenessProbe:
+          httpGet:
+            path: /java-web-app
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /java-web-app
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+
+--- # service with load balancer
+apiVersion: v1
+kind: Service
+metadata:
+  name: javawebappsvc
+spec:
+  type: LoadBalancer # external loab balamcer
+  selector:
+    app: javawebapp  # # --- SAME ( pod lable )
+  ports:
+  - port: 80 # -- load balmcing port
+    targetPort: 8080
+...
+
+--- # nginx-resource
+apiVersion: networking.k8s.io/v1  
+kind: Ingress
+metadata:
+  name: javawebapprules
+  #namespace: <namespace>
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: javawebapp.miyhuntechdevops.co.in
+    http:
+      paths:
+       - pathType: Prefix  # exact  
+         path: "/" # anything after /
+         backend:
+           service:
+             name: jawawebappsvc
+             port:
+                number: 80
+... 
+#-----------------------------------------------------------------------------------------------------

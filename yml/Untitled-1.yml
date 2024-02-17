@@ -1,0 +1,400 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+  labels:
+    name: myapp
+spec:
+  containers:
+  - name: myapp
+    image: <Image>
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+    ports:
+      - containerPort: 80
+
+
+--- # ReplicaSet
+apiVersion: v1
+kind: ReplicationController
+metadata: # For RC  metadata
+  name: myapp
+  namespace: test-ns
+spec: # # For RC Specificatinion
+  replicas: 1
+  template: # For POD  Template
+    metadata: 
+      name: myapp
+      labels: # For POD lables
+        app: myapp
+    spec: # For POD specifications
+      containers:
+        - name: myapp
+          image: nginx
+          ports:
+            - containerPort: 8080
+
+
+--- # ReplicaSet 
+# only reference:
+
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  namespace: test-ns
+  name: nodejsapp
+  labels:             # -----  this label for RC
+    type: RSet
+spec:    # ------ this spec for RC
+  replicas: 3
+  selector:
+    # matchLabels:         --->   'Equality Based Selector' (EBS)
+    # matchExpressions:    --->   '  Set    Based Selector' (SBS)
+    matchLabels:      # (EBS)
+      app: nodeapp
+    matchExpressions: # (SBS)
+      - key: app
+        operator: In
+        values:
+          - myapp1
+          - myapp2
+  template:  # For POD template
+    metadata:
+      name: nodeapppod
+      labels:            # ------- label of pods
+        app: nodeapp
+    spec:     # -------- this is for pods container 
+     containers:
+       - name: container12
+         image: coolgourav147/nginx-custom
+.         
+
+--- # DaemonSet
+# We are tolerating master node 
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nginx-ds
+  namespace: test-ns
+spec:
+  selector:
+    matchLabels:
+      app: myapp1  # same
+  template:
+    metadata:
+      labels:
+        app: myapp1 # same
+    spec: # For POD specifications
+      # we are tolerate master (Now DaemonSet pod also scheduled on Master Node)
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists # BCZ no Value here,
+        effect: NoSchedule
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 8080
+
+
+# kubectl describe node <Master node>
+
+   # Taints: node-role.kubernetes.io/master:NoSchedule
+
+   # THREEE EFFECT :
+   #    NoSchedule
+   #    PreferNoSchedule
+   #    NoExecute
+   #
+   #   <Key>=<Value>:<Effect>
+   #   node-role.kubernetes.io/master:NoSchedule
+   #   -------- k e y ---------------:--effect--
+
+
+--- # Deployment  type= Recreate
+
+apiVersion: apps/v1
+kind: Deployment   # ------ Deployment 'object'
+metadata:
+   name: nginx-deployments     # -------- Name of ''Deployment''
+   labels:
+     app: nginx  # ------- same
+spec:
+   replicas: 4
+   strategy:
+     type: Recreate    # --- all pod down and New create at same time.
+   selector:
+     matchLabels:
+     app: nginx    # ------- same
+   template:
+     metadata:
+       labels:
+         app: nginx  # --------ssame
+     spec:
+       containers:
+         - name: nginx
+           image: nginx:1.9.1
+           ports:
+             - containerPort: 80
+
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mypvc
+spec:
+  resources:
+    requests:
+      storage: <Size>
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+             
+
+
+---
+#--------------------------------------------------------------------------------
+#  EKS
+# vi javawebapp.yml
+
+--- # Mithun Deployment :
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: javawebapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: javawebapp # --- SAME
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 60
+  template:
+    metadata:
+      name: javawebapp
+      labels:
+        app: javawebapp # --- SAME
+    spec:
+      containers:
+      - name: javawebapp
+        image: dockerhandson/java-web-app:3
+        ports:
+        - containerPort: 8080
+--- # service with load balancer
+apiVersion: v1
+kind: Service
+metadata:
+  name: javawebappsvc
+spec:
+  type: LoadBalancer # external loab balamcer
+  selector:
+    app: javawebapp  # # --- SAME ( pod lable )
+  ports:
+  - port: 80 # -- load balmcing port
+    targetPort: 8080
+...
+#-----------------------------------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------------------------------
+--- # Mithun Deployment :
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pythonapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pythonapp # --- SAME
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 60
+  template:
+    metadata:
+      name: pythonapp
+      labels:
+        app: pythonapp # --- SAME
+    spec:
+      containers:
+      - name: pythonappcont
+        image: dockerhandson/python-flask-app:1
+        ports:
+        - containerPort: 5000
+--- # service with load balancer
+apiVersion: v1
+kind: Service
+metadata:
+  name: pythonappsvc
+spec:
+  type: LoadBalancer # external loab balamcer
+  selector:
+    app: pythonapp  # --- SAME ( pod lable )
+  ports:
+  - port: 80 # -- load balmcing port
+    targetPort: 5000
+...
+#---------------------------------------------------------------------------------------------------
+
+
+
+#----------------------------------------------------------------------------------------------------
+--- # Mithun Deployment :
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: javawebapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: javawebapp # --- SAME
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 60
+  template:
+    metadata:
+      name: javawebapp
+      labels:
+        app: javawebapp # --- SAME
+    spec:
+      containers:
+      - name: javawebapp
+        image: dockerhandson/java-web-app:3
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 1
+            memory: 2Gi
+        livenessProbe:
+          httpGet:
+            path: /java-web-app
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /java-web-app
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+
+--- # service with load balancer
+apiVersion: v1
+kind: Service
+metadata:
+  name: javawebappsvc
+spec:
+  type: LoadBalancer # external loab balamcer
+  selector:
+    app: javawebapp  # # --- SAME ( pod lable )
+  ports:
+  - port: 80 # -- load balmcing port
+    targetPort: 8080
+...
+
+#-----------------------------------------------------------------------------------------------------
+
+
+--- #
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongod
+  namespace: test-ns  # IF 'test-ns' not creat, 1st create namesapce of this name 'test-ns' . $ kubectl create ns test-ns
+spec:
+  selector:
+    matchLabels:
+      app: mongod
+  serviceName: mongodb-service
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: mongod
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: mongodb-container
+        image: mongo
+        command:
+         - "mongod"
+         - "--bind_ip"
+         - "--replSet"
+         - "MainRepSet"
+        resources:
+          requests:
+            cpu: 200m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        ports:
+        - containerPort: 27017
+          name: mongo-cont
+        volumeMounts:
+        - name: mongodb-persistent-storage-claim
+          mountPath: "/data/db"
+  volumeClaimTemplates:
+  - metadata:
+      name: mongodb-persistent-storage-claim
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+--- #
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service
+  namespace: test-ns
+spec:
+  type: ClusterIP
+  selector:
+    app: mongod
+  ports:
+  - port: 27017
+    targetPort: 27017
+...
+ 
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       
+

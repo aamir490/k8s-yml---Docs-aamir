@@ -1,0 +1,208 @@
+
+
+#############################################################################
+#           Kubernetes Role Based Access Control  ( RBAC )
+#############################################################################
+'''
+
+When a request is sent to the API Server, it 1st needs to be authenticated (to make sure the requestor is known by the system) before it’s 
+  authorized (to make sure the requestor is allowed to perform the action requested).
+
+
+RBAC is a way to define which users can do what within a Kubernetes cluster.
+
+
+
+Broadly, there are three kinds of users that need access to a Kubernetes cluster:------>
+
+1. Developers/Admins:-
+
+Users that are responsible to do administrative or developmental tasks on the cluster. This includes operations like upgrading the 
+  cluster or creating the resources/workloads on the cluster.
+
+
+2. End Users:-
+
+Users that access the applications deployed on our Kubernetes cluster. Access restrictions for these users are managed by the applications 
+  themselves. For example, a web application running on Kubernetes cluster, will have its own security mechanism in place, to prevent
+    unauthorized access.
+
+
+3. Applications/Bots:-
+
+There is a possibility that other applications need access to Kubernetes cluster, typically to talk to resources or workloads inside the 
+  cluster. Kubernetes facilitates this by using Service Accounts..
+
+
+
+
+
+RBAC in Kubernetes is based on three key concepts:------>
+
+  1. Verbs         : set of permission like  CURD   tht can be executef on resources.
+  2. API Resources : These r the objects available on the clusters. They r the pods, services, nodes, PV & other things that make up k8s.
+  3. Subjects      : These r the objects (Users,Groups,Processes(Service Account)) allowed access to the API, based on Verbs and Resources.
+'''
+
+#--------------------------------------------------------------------------------------------------------------
+
+# RBAC Role :----))))))))))))))))))))))))
+#         A Role example named example-role which allows access to
+
+
+# the mynamespace with get, watch, and list operations:
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+ namespace: mynamespace
+ name: example-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+...
+
+#  In the rules above we:
+# 1. apiGroups: [""]          – set core API group
+# 2. resources: ["pods"]      – which resources are allowed for access
+# 3. ["get", "watch", "list"] – which actions are allowed over the resources above
+
+
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+ namespace: mynamespace
+ name: example-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+- apiGroups: [""]
+  resources: ["replicationcontroller"]
+  verbs: ["get", "watch", "list" , "update" , "create" , "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments" , "statefulsets"]
+  verbs: ["get", "watch", "list" , "update" , "create" , "delete"]    
+...
+
+#--------------------------------------------------------------------------------------------------------------
+
+
+
+
+#--------------------------------------------------------------------------------------------------------------
+# RBAC RoleBingding :----))))))))))))))))))))))))
+
+#     To “map” those permissions to users we are using Kubernetes RoleBingding, which 
+
+# sets example-role in the mynamespace for the example-user user:
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+ name: example-rolebinding
+ namespace: mynamespace
+subjects:
+- kind: User
+  name: example-user #----
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+ kind: Role
+ name: example-role #----
+ apiGroup: rbac.authorization.k8s.io
+... 
+
+# Here we set:
+# * subjects:--
+#    ▪ kind: User – an object type which will have access, in our case this is a regular user.
+#    ▪ name: example-user – a user’s name to set the permissions
+
+# * roleRef:--
+#    ▪ kind: Role – what exactly will be attached to the user, in this case, it is the Role object type
+#    ▪ name: example-role and the role name as it was set in the name:  in the example above
+#------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#  Basically we have 2 sets of permissions :---
+
+# 1 --  Authentication :- (identity) 
+  
+   " who can enter into my cluster "  OR  " checking the identity of the user, whether the user is valid or not "
+
+
+
+# 1 --  Authorizations :- (Permissions) 
+   
+   "once the person has logged in , what the person can do ? "  - Authorizations is maintain by RBAC.
+
+
+
+
+# -----> for Authentication ::--- x-509 , LDAP , IAM 
+# -----> for Authorizations ::--- RBAC
+
+
+
+ -[ Authorizations is maintain by RBAC ]-
+
+   NOTE :- we have two types of Roles.
+
+    1- cluster-role
+
+        a- cluster-admin:-    if attach this role, that person will have Root Access.
+        b- self-provisioner:- user with this role can create namespace and delte them.
+
+    2- Project / Local role
+
+       a- view:-  person with this role can see all resources inside a namespace.
+       b- edit:-  person with this role can create , delete , modify , patch the resources, but the person cant give someone elsw permission
+                  on the namespace and cant even manage the quota and limits.
+       c- admin:- person with this role can do anything with that namespace  
+
+
+   NOTE :- we have two types of Roles-Binding. 
+
+   1- Cluster-Role           ===  attached  ===  user gets  ===  Cluster-Role  
+
+   2- Project / Local role   ===  attached  ===  user gets  ===  Roles-Binding
+
+
+
+
+
+
+
+
+
+
+
+
+'''
+

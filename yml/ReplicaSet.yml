@@ -1,0 +1,182 @@
+# **********************     REPLICA SET   ********************************
+
+#-------------------------------------------------------------------------------------------------------------------------------
+# -------------- &&&&&&&&&&&&&    ' Gaurav Shrma '
+---
+kind: ReplicaSet
+apiVersion: apps/v1
+metadata:
+  name: myrs   #   name of RS
+  #namespace: testns   # -- if your namespace already exsist  & u want to create pod in ''testn''  // create " testns "  
+  labels:             # ----- this label for ReplicaSet ( optional )
+    appname: voating-app
+spec:    # ----  this spec for ReplicaSet
+  replicas: 3
+  selector:  # ----------  Rs support  (set based   &  equality based selector ) ( Mandetory )
+    matchLabels:    # ---- in RS use this..( Equality )      # <map[string]string>
+      app: myapp #--$$$$
+  template:  # ---- pod info
+    metadata:
+      name: my-pod
+      labels:            # ---- label of pods
+        app: myapp
+    spec:     # -----  this is for pod
+     containers:
+        - name: container12
+          image: coolgourav147/nginx-custom
+          ports:
+           - containerPort: 8080
+          resources:
+             requests:     # --- MINIMUM value of PODS
+                memory: "100Mi"  
+                cpu: "100m"
+             limits:       # --- MAXIMUM value of PODS
+                memory: "200Mi"  
+                cpu: "500m"
+...  
+
+# we create ' Service ' too  for outside & inside  communications.   { OPTIONAL } 
+
+---
+kind: Service    #------ Defines to create Service type Object
+apiVersion: v1
+metadata:
+  name: for-voating-app # ----- service name
+  #namespace: testns # -- if your namespace already exsist  & uwant to create pod in ''testn''
+spec:
+  type: NodePort   #--- Specifies the service type   i.e:-  ClusterIP(inside)  or  NodePort(outside)
+  selector:
+    app: myapp #--$$$$ #---- Apply this service to any pods which has the specific label
+  ports:
+    - port: 80        # service port     Containers port exposed
+      targetPort: 8080     # container's port   
+...
+#-------------------------------------------------------------------------------------------------------------------------------
+
+#     OR
+
+
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: rc-demo
+spec:    # this spec for RC
+  replicas: 3
+  selector:   # ----------  Rs support  (set based   &  equality based selector )
+    matchExpressions:   # ---- in RS use this..
+          - key: team
+            operator: In    # - 1   #--: 2 operator type --- {'In' , 'NotIn'}
+            values:   # -- PODS LABELS
+               - dev
+               - prod
+               - test
+          - key: team
+            operator: NotIn # - 2
+            values:   # -- PODS LABELs
+               - test
+  template:
+    metadata:
+      name: rs-demo
+      labels:            # label of pods
+        team: dev
+    spec:     # this is for pod
+      containers:
+         - name: rc-demo1
+           image: nginx:1.7.1
+           ports:
+              - containerPort: 80
+...      
+
+
+   #  OR
+      
+
+ # -------------- &&&&&&&&&&&&& ' Gaurav '
+---
+kind: ReplicaSet
+apiVersion: apps/v1
+metadata:
+  name: newrs0000
+  labels:             # -----  this label for RC
+    appname: voatinggg
+spec:    # ------ this spec for RC
+  replicas: 3
+  selector:
+    matchExpressions:
+          - key: app
+            operator: In
+            values:
+               - myapp1
+               - myapp2
+  template:
+    metadata:
+      name: pod
+      labels:            # ------- label of pods
+        app: myapp1
+    spec:     # -------- this is for pod
+     containers:
+       - name: container12
+         image: coolgourav147/nginx-custom
+...         
+
+
+      # OR 
+
+
+---
+kind: ReplicaSet
+apiVersion: apps/v1
+metadata:
+  name: newrs0000
+  labels:             # --- this label for RC
+    appname: voatinggg
+spec:    # ----  this spec for RC
+  replicas: 3
+  selector:
+    matchExpressions:
+          - key: app
+            operator: In
+            values:
+               - myapp44
+               - myapp55
+          - key: app
+            operator: NotIn
+            values:
+               - backend
+
+  template:
+    metadata:
+      name: pod1111
+      labels:
+         app: myapp55
+    spec:     # this is for pod
+     containers:
+       - name: container12
+         image: coolgourav147/nginx-custom
+...         
+
+
+# -------------- &&&&&&&&&&&&& ' T G '
+---
+kind: ReplicaSet    #-------------updated version of   Replication Controller                                
+apiVersion: apps/v1                            
+metadata:
+  name: myrs      # --------- name of replica set
+spec:
+  replicas: 2  
+  selector:                  
+    matchExpressions:    # -----------------------------    these must match the labels
+      - {key: myname, operator: In, values: [Bhupinder, Bupinder, Bhopendra]}  ## -------------- Bhupinder
+      - {key: env, operator: NotIn, values: [production]}
+  template:      
+    metadata:
+      name: testpod9
+      labels:              
+        myname: Bhupinder   ## -------------- Bhupinder
+    spec:
+     containers:
+       - name: c00
+         image: ubuntu
+         command: ["/bin/bash", "-c", "while true; do echo Hello-AAMIR; sleep 5 ; done"] 
+...   

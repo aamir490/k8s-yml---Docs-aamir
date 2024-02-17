@@ -1,0 +1,149 @@
+
+
+
+#    ****************     RESOURCE QUOTA    ***********************
+
+#  NOTE:: ----------  RESOURCE QUOTA is always set to the Namespace. ------------
+#         Limt range is only applicabe for  {PODS ,, CONTAINERS ,, STRORAGE}.
+# 'Resource at the container level'  &  'ResourceQuota at the Namespace level'
+
+#  using ResourceQuota we can limit the resource consumeptions per namespace.
+
+# NOW WE CREATE NAMESPACE  'testns' :---
+# kubectl create ns testns   
+# kubectl get namespace
+# kubectl get all -n testns 
+# kubectl get quota -n testns
+# kubectl get resoucequota -n testns     
+# kubectl get rs 
+# kubectl get rs  my-rs -n testns   
+# kubectl ge events -n testns           ( showing what happend )                      
+
+#------------------------------------------------------------------------------------------------------------------------
+# -------- $$$$$$$$$$$ 'RESOURCE QUOTA'
+# -------- { we create  resource quota  and  limitrange }   &    {  now we create  Replicaset  and service}    
+# vi myresource-quota-limit-range.yml
+---
+apiVersion: v1
+kind: ResourceQuota   # ------- object is 'ResourceQuota'
+metadata:
+   name: myquota  # ---- name of 'ResourceQuota'
+   namespace: testns    # ----  'ResourceQuota' create in  'testns' namespace.
+spec:
+  hard:
+    requests.cpu: "500m"
+    requests.memory: 512Mi # complete namespce max resource req.mem
+    limits.cpu: "1"
+    limits.memory: 1Gi
+    pods: 2
+
+...    
+
+# -------- $$$$$$$$$$$ 'LimitRange'  ( default kind of limits and request )
+
+---
+apiVersion: v1
+kind: LimitRange  # ----- we are defining limits and request by 'LimitRange' oject.
+metadata:
+  name: cpu-limit-range
+  namespace: testns
+spec:
+  limits:
+    - default:
+        cpu: 500m 
+        memory: 512Mi
+      defaultRequest: 
+        cpu: 100m
+        memory: 256Mi
+      type: Container  
+... 
+ 
+#------------------------------------------------------------------------------------------------------------------------------
+
+
+
+#-------------------------------------------------------------------------------------------------------------------------------
+# -------------- &&&&&&&&&&&&&    ' ReplicaSet '
+# -------- { we create  resource quota  and  limitrange }   &    { now we create  Replicaset  and service}    
+# vi replicaSet-service.yml
+---
+kind: ReplicaSet
+apiVersion: apps/v1
+metadata:
+  name: my-rs   #   name of RS
+  namespace: testns   # -- if your namespace already exsist  & u want to create pod in ''testn''  // create " testns "  
+spec:   
+  replicas: 2
+  selector:  # ----------  Rs support  (set based   &  equality based selector ) ( Mandetory )
+    matchLabels:    # ---- in RS use this..( Equality )      # <map[string]string>
+      app: myapp    #--$$$$
+  template:  # ---- pod info
+    metadata:
+      name: my-pod
+      labels:            # ---- label of pods
+        app: myapp #--$$$$
+    spec:     # -----  this is for pod
+     containers:
+        - name: container1
+          image: coolgourav147/nginx-custom
+          ports:
+           - containerPort: 8080
+...  
+
+# -------- $$$$$$$$$$$  ' Service '      too  for outside & inside  communications.   { OPTIONAL } 
+
+---
+kind: Service    
+apiVersion: v1
+metadata:
+  name: my-svc  # ----- service name
+  namespace: testns # -- if your namespace already exsist  & uwant to create pod in ''testn''
+spec:
+  type: NodePort   #--- Specifies the service type   i.e:-  ClusterIP(inside)  or  NodePort(outside)
+  selector:
+    app: myapp #--$$$$ #---- Apply this service to any pods which has the specific label
+  ports:
+    - port: 80        # service port     Containers port exposed
+      targetPort: 8080     # container's port   
+...
+#-------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+   name: myquota
+spec:
+  hard:
+    requests.cpu: 0.5
+    requests.memory: 500Mi
+    limits.cpu: 1
+    limits.memory: 1Gi
+...    
+
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: resources    # --- pod name  
+spec:
+  containers:
+  - name: resource
+    image: centos
+    command: ["/bin/bash", "-c", "while true; do echo Technical-Guftgu; sleep 5 ; done"]
+    resources:        ## ---- Request & Limit                                     
+      requests:    # --------------------------------REQUEST
+        memory: "64Mi"
+        cpu: "100m"
+      limits:      # --------------------------------MAX LIMITS    { LIMITS >> REQUESTS }
+        memory: "128Mi"
+        cpu: "200m"        ## limit hameha zyda hogi requst se
+...

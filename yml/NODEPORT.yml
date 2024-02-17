@@ -1,0 +1,71 @@
+# ------------------$$$$$$$$$$$$$$     gaurav  ' Service '    now ab selector into othrt yml file
+
+---
+kind: Service                             # Defines to create Service type Object
+apiVersion: v1
+metadata:
+  name: myservice
+  labels:
+    servicelab: labelname
+spec:
+  type: NodePort                            # svc type NodePort
+  ports:
+    - nodePort: 32000             # yaha  jo  bhi request ayegi
+      port: 9000                  # yaha ayegi
+      targetPort: 80              # 9000 issko yaha bhej defa
+  selector:
+    name: deployment                    # Apply this service to any pods which has the specific label
+    type: app                      # Specifies the service type i.e ClusterIP or NodePort
+...    
+
+
+
+# ***********  | vi deployhttpd.yml <----|(%%%%%%%%%%%)  NODEPORT |   vi svc.yml  |    ***************************
+---
+kind: Service    # Defines to create Service type Object
+apiVersion: v1
+metadata:
+  name: demoservice
+spec:
+  ports:
+    - port: 80        # Containers port exposed
+      targetPort: 80     # Pods port
+  selector:
+    name: deployment    # Apply this service to any pods which has the specific label
+  type: NodePort        # Specifies the service type i.e ClusterIP or NodePort
+...  
+
+#-----------------------------------------------------------------------------------------------------
+
+---
+kind: Pod                              
+apiVersion: v1                     
+metadata:                           
+  name: testpod 
+  labels:          # ----- label of pods
+     apps: my-app
+  namespace: testns   # -- if your namespace already exsist  & uwant to create pod in ''testn''               
+spec:                                    
+  containers:                      
+    - name: c1                    
+      image: ubuntu              
+      ports:
+        - containerPort: 8080
+...
+
+---
+kind: Service      # ---------- Defines to create Service type Object
+apiVersion: v1
+metadata:
+  name: myservice
+  namespace: testns
+spec:
+  type: NodePort    #--------  svc type NodePort
+  selector:
+     apps: my-app                    
+  ports:
+    - port: 80                  # yaha ayegi
+      targetPort: 8080             # 9000 issko yaha bhej defa 
+...    
+
+#-----------------------------------------------------------------------------------------------------

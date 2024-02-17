@@ -1,0 +1,180 @@
+
+##############################################################################################
+#                  REPLICATION CONTROLLER  or   POD CONTROLLER  
+##############################################################################################
+
+'''
+POD :- pod is ephimeral ( lasting very short time ) & wont be rescheduled to a new node once it dies.
+'''
+      # POD should be created & managed by some controllers.
+
+        # Replication Controller
+        # Replica Set
+        # Daemon Set
+        # Deploymnet
+        # Stateful set
+
+
+
+
+#    ( RC WORKS only  - ' EQUALITY BASED SELECTOR ' -  )       (It can  only monitor 1-st of labels ….eg:  team=dev  )
+
+#  REPLICATION CONTROLLER     will support for 'rolling update of the application's  { RC support only 'One labels' }  
+
+# In  RC  'selector' is not mandetory.
+
+# kubectl explain rc | less             # kubectl explain rc --recursive | less         (for yml file ) 
+
+
+# kubectl api-resources | grep "ReplicationController"
+
+
+
+
+
+#------------------------------------------------------------------------
+
+--- # ReplicationController
+apiVersion: v1
+kind: ReplicationController
+metadata: # For RC  metadata
+  name: myapp # For RC name
+  namespace: test-ns
+spec: # ---------------- For RC Specificatinion
+  replicas: 1
+  template: # ---------------- For POD  Template
+    metadata: 
+      name: myapp
+      labels: # For POD lables
+        app: myapp    ###+++++++++++++++++++++ SAME
+    spec: # For POD specifications
+      containers:
+        - name: myapp
+          image: nginx
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp
+  namespace: test-ns
+spec:
+  type: NodePort
+  selector:
+    app: myapp      ###+++++++++++++++++++++ SAME
+  ports:
+  - port: 80
+    targetPort: 8080
+#-----------------------------------------------------------------------
+
+
+
+
+#------------------------------------------------------------------------------------------------------------------------
+ #                             - REPLICATION CONTROLLER  or   POD CONTROLLER  - vi pod8.yml
+
+--- # REPLICATION CONTROLLER
+apiVersion: v1
+kind: ReplicationController # ---------kind of  " object "             
+metadata:
+  name: my-replica   # --------name of object   Replication Controller ( controller name ) <----- POD NAME
+spec:
+  replicas: 2   # ----------------desired no of PODS.   ( always 2 POD running )          
+  selector:  # {in RC Not Mandetory - optional}        
+    apps:  my-app  #-- $$$$@@@  # must match ""labels""   jis pr ye ''labele'' lga ho us pod ko select krna hai..                          
+  template:        # { POD template } ----template  defines to launch New PODS. {INSIDE -POD INFORMATIONS}
+    metadata:                  
+      name: test-pod-rc   
+      labels:      # --------selector value need to match labels {FOR POD Labels}         
+        apps: my-app  #-- $$$$@@@
+    spec:
+     containers:
+       - name: c00  # --- container name
+         image: ubuntu
+         command: ["/bin/bash", "-c", "while true; do echo Hello-AAMIR; sleep 5 ; done"]
+         ports:
+           - containerPort: 8080
+...
+
+# vi pod8.yml
+# kubectl apply -f pod8.yml                            
+# kubectl get rc                                 ( check desired and current,) - ( NAME DESIRED CURRENT READY AGE ) 
+# kubectl get all -n test-ns
+# kubectl get all -o wide -n test-ns
+# kubectl describe rc  my-replica                ( name of RC = my-replica ) ( descrieb replica )
+# kubectl get rc,pods
+# kubectl get rc,pods --show-labels              ( showing RC , Pods labels )
+# watch kubectl get rc,pods --show-labels
+# kubectl get pods                               ( pods running status) 5 pods with replications
+# kubectl get pods --show-labels                 ( showing label )
+# kubectl get pods -o wide --show-labels -n test-ns
+# kubectl scale rc my-replica --replicas=8
+# kubectl scale --replicas=8 rc -l apps=my-app            
+# kubectl edit rc my-replica                     replicationcontroller/myreplica edited  (myreplica = RC name inside yml)
+# kubectl delete rc my-replica -n test-ns 
+# kubectl delete -f pod8.yml                     ( if u want to delete RC  delte yml file )
+# kubectl delete rc --all                        [ only delete RC ]
+# kubectl delete all --all -n test-ns            [ delete all resources ]
+# kubectl delete rc --cascade=false my-replica   ( this  delete RC but don’t delete pods )      
+# kubectl get ep -n test-ns          
+
+
+# CREATE YML THROUGH IMPERATIVE COMMANDS:- [kubectl commnads]
+''' 
+$ kubectl run testpod --image=nginx --labels="app=nginx,env=prod-team" --port=80 -n default --dry-run=client
+
+$ kubectl run testpod --image=nginx --labels="app=nginx,env=prod-team" --port=80 -n default --dry-run=client -o yaml
+
+$ kubectl run testpod --image=nginx --labels="app=nginx,env=prod-team" --port=80 -n default --dry-run=client -o yaml > test-pod.yml
+
+# for modifying...
+
+$ vi test-pod.yml
+'''
+
+#------------------------------------------------------------------------------------------------------------------------
+
+#     
+--- # Rajesh video 11
+kind: ReplicationController  # --------- kind of  " object "             
+apiVersion: v1
+metadata:
+  name: rc-demo    # -------- name of Replication Controller  
+spec:
+  replicas: 3   # ---------------- desired no of PODS.    always 2 POD running             
+  selector:       # ----- Rc support only ( equality based selectors )   
+    team: dev  #$$$$  # must match ""labels""   jis pr ye ''labele'' lga ho us pod ko select krna hai..                          
+  template:        # ---- template  defines to launch New PODS. { PODS INFO }
+    metadata:                  
+      name: rc-demo    
+      labels:      # -------- selector value need to match labels  {RC support only '1 labels'}        
+        team: dev  #$$$$ 
+    spec:
+     containers:
+       - name: rc-demo1
+         image: nginx:1.7.1
+         ports: 
+           - containerPort: 80
+...           
+
+ 
+
+---
+kind: Service    #------ Defines to create Service type Object
+apiVersion: v1
+metadata:
+  name: testpodsvc  # ----- service name
+spec:
+  type: NodePort   #--- Specifies the service type i.e ClusterIP or NodePort
+  selector:
+    apps: my-app #-- $$$$    #---- Apply this service to any pods which has the specific label
+  ports:
+    - port: 80        # Containers port exposed
+      targetPort: 8080     # Pods port   
+...
+
+#-------------------------------------------------------------------------------------------------------------=
+
+
+

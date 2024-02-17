@@ -1,0 +1,28 @@
+
+##############################################################
+#      S T A T I C   P O D
+##############################################################
+
+
+# go to --->  ls /etc/kubernetes/manifests/
+# create pod here, 
+
+# ubuntuIP-91-24-358$ vi nginxpod.yml
+#____________________________________
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginxpod1
+  labels:
+    app: nginx1
+spec:
+  containers:
+  - name: nginxcontainer1
+    image: nginx
+    ports:
+      - containerPort: 80
+.
+#_____________________________________
+
+# ubuntuIP-91-24-358$ sudo cp nginxpod.yml /etc/kubernetes/manifests/nginxpod.yml
